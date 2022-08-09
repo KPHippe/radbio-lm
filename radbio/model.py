@@ -18,7 +18,7 @@ from transformers import AutoConfig, AutoModelForCausalLM, PreTrainedTokenizerFa
 from transformers.models.gpt2.modeling_gpt2 import GPT2DoubleHeadsModelOutput
 
 
-class DNATransformer(pl.LightningModule):
+class TransformerModel(pl.LightningModule):
 
     cfg: ModelSettings
     train_dataset: Dataset
@@ -118,13 +118,13 @@ class DNATransformer(pl.LightningModule):
 def train(cfg: ModelSettings) -> None:
     if cfg.load_pt_checkpoint is not None:
         load_strategy = LoadPTCheckpointStrategy(cfg.load_pt_checkpoint, cfg=cfg)
-        model = load_strategy.get_model(DNATransformer)
+        model = load_strategy.get_model(TransformerModel)
     elif cfg.load_ds_checkpoint is not None:
         load_strategy = LoadDeepSpeedStrategy(cfg.load_ds_checkpoint, cfg=cfg)
-        model = load_strategy.get_model(DNATransformer)
+        model = load_strategy.get_model(TransformerModel)
         print(f"Loaded existing model at checkpoint {cfg.load_ds_checkpoint}....")
     else:
-        model = DNATransformer(cfg)
+        model = TransformerModel(cfg)
 
     # Setup wandb
     wandb_logger = None

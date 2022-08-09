@@ -38,7 +38,7 @@ class WarmupLRSettings(BaseSettings):
 
 
 class ModelSettings(BaseSettings):
-    """Settings for the DNATransformer model."""
+    """Settings for the TransformerModel model."""
 
     # logging settings
     wandb_active: bool = True
