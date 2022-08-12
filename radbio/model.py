@@ -6,8 +6,8 @@ import pytorch_lightning as pl
 import torch
 from deepspeed.ops.adam import DeepSpeedCPUAdam, FusedAdam
 from deepspeed.runtime.lr_schedules import WarmupLR
-from gene_transformer.config import ModelSettings, PathLike
-from gene_transformer.utils import LoadDeepSpeedStrategy, LoadPTCheckpointStrategy
+from radbio.config import ModelSettings, PathLike
+from radbio.utils import LoadDeepSpeedStrategy, LoadPTCheckpointStrategy
 from pytorch_lightning.callbacks import Callback, LearningRateMonitor, ModelCheckpoint
 from pytorch_lightning.loggers import WandbLogger
 from pytorch_lightning.plugins import DeepSpeedPlugin
@@ -35,9 +35,7 @@ class TransformerModel(pl.LightningModule):
         self.save_hyperparameters(settings_dict)
 
         self.cfg = cfg
-        self.tokenizer = PreTrainedTokenizerFast(
-            tokenizer_object=Tokenizer.from_file(str(self.cfg.tokenizer_file))
-        )
+        self.tokenizer = PreTrainedTokenizerFast(tokenizer_object=Tokenizer.from_file(str(self.cfg.tokenizer_file)))
         self.tokenizer.add_special_tokens({"pad_token": "[PAD]"})
 
         # loads from a json file like this: https://huggingface.co/google/reformer-enwik8/blob/main/config.json
