@@ -28,8 +28,7 @@ class PILE_Dataset(Dataset):
         self.cache_dir = cache_dir
         self.split = split
 
-        if not self.tokenizer.pad_token:
-            self.tokenizer.pad_token = self.tokenizer.eos_token
+        self.tokenizer.add_special_tokens({"pad_token": "[PAD]"})
 
         # TODO: dataset is different type if split is None
         self.dataset = load_dataset(self.path, name=self.name, cache_dir=self.cache_dir, split=self.split)
@@ -41,12 +40,7 @@ class PILE_Dataset(Dataset):
 
     def __getitem__(self, idx: int) -> torch.Tensor:
         raw_text = self.dataset[idx]["text"]
-        print(raw_text)
-        encoded_text = torch.tensor(
-            self.tokenizer.encode(raw_text, max_length=self.block_size, padding="max_length")
-        ).long()
-
-        return encoded_text
+        return self.tokenizer(raw_text, return_tensors="pt")
 
 
 def main(args):
