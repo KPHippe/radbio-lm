@@ -1,0 +1,14 @@
+wandb_active: false
+wandb_project_name: radbio_gptneox
+
+dataset_name: enron_emails
+split: train
+train_split: train
+cache_dir: /home/khippe/raid/hf_dataset_test
+
+model_config_json: /home/khippe/github/radbio-lm/configs/gptneox_1.3b_hf.json
+warm_up_lr:
+  min_lr: 5e-8
+  num_steps: 5000
+
+pin_memory: false

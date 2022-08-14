@@ -1,21 +1,24 @@
 import json
 import os
 from argparse import ArgumentParser
-from typing import Any, List
+from typing import Any, List, Optional
 import pytorch_lightning as pl
 import torch
 from deepspeed.ops.adam import DeepSpeedCPUAdam, FusedAdam
 from deepspeed.runtime.lr_schedules import WarmupLR
-from radbio.config import ModelSettings, PathLike
-from radbio.utils import LoadDeepSpeedStrategy, LoadPTCheckpointStrategy
 from pytorch_lightning.callbacks import Callback, LearningRateMonitor, ModelCheckpoint
 from pytorch_lightning.loggers import WandbLogger
-from pytorch_lightning.plugins import DeepSpeedPlugin
+from pytorch_lightning.strategies.deepspeed import DeepSpeedStrategy
+
+# from pytorch_lightning.plugins import DeepSpeedPlugin
 from pytorch_lightning.profiler import PyTorchProfiler
-from tokenizers import Tokenizer
 from torch.utils.data import DataLoader, Dataset
-from transformers import AutoConfig, AutoModelForCausalLM, PreTrainedTokenizerFast
+from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
 from transformers.models.gpt2.modeling_gpt2 import GPT2DoubleHeadsModelOutput
+
+from radbio.config import ModelSettings
+from radbio.utils import LoadDeepSpeedStrategy, LoadPTCheckpointStrategy
+from radbio.dataset import PILE_Dataset
 
 
 class TransformerModel(pl.LightningModule):
@@ -35,7 +38,7 @@ class TransformerModel(pl.LightningModule):
         self.save_hyperparameters(settings_dict)
 
         self.cfg = cfg
-        self.tokenizer = PreTrainedTokenizerFast(tokenizer_object=Tokenizer.from_file(str(self.cfg.tokenizer_file)))
+        self.tokenizer = AutoTokenizer.from_pretrained(self.cfg.tokenizer_name)
         self.tokenizer.add_special_tokens({"pad_token": "[PAD]"})
 
         # loads from a json file like this: https://huggingface.co/google/reformer-enwik8/blob/main/config.json
@@ -45,9 +48,15 @@ class TransformerModel(pl.LightningModule):
     # def configure_sharded_model(self):
     #     self.model = AutoModelForCausalLM.from_config(self.base_config)
 
-    def get_dataset(self, data_path: PathLike) -> Dataset:
+    def get_dataset(self, split: Optional[str] = None) -> Dataset:
         """Helper function to generate dataset."""
-        pass  # TODO: Return Dataset class
+
+        return PILE_Dataset(
+            name=self.cfg.dataset_name,
+            tokenizer=self.tokenizer,
+            cache_dir=self.cfg.cache_dir,
+            split=split,
+        )
 
     def get_dataloader(self, dataset: Dataset, shuffle: bool) -> DataLoader:
         """Helper function to generate dataloader."""
@@ -63,19 +72,23 @@ class TransformerModel(pl.LightningModule):
         )
 
     def train_dataloader(self) -> DataLoader:
-        self.train_dataset = self.get_dataset(self.cfg.train_file)
+        self.train_dataset = self.get_dataset(self.cfg.train_split)
         return self.get_dataloader(self.train_dataset, shuffle=True)
 
-    def val_dataloader(self) -> DataLoader:
-        self.val_dataset = self.get_dataset(self.cfg.val_file)
-        return self.get_dataloader(self.val_dataset, shuffle=False)
+    def val_dataloader(self) -> Optional[DataLoader]:
+        if self.cfg.validation_split:
+            self.val_dataset = self.get_dataset(self.cfg.validation_split)
+            return self.get_dataloader(self.val_dataset, shuffle=False)
+        return None
 
     def test_dataloader(self) -> DataLoader:
-        self.test_dataset = self.get_dataset(self.cfg.test_file)
-        return self.get_dataloader(self.test_dataset, shuffle=False)
+        if self.cfg.test_split:
+            self.test_dataset = self.get_dataset(self.cfg.test_split)
+            return self.get_dataloader(self.test_dataset, shuffle=False)
+        return None
 
     def forward(self, x: torch.Tensor, **kwargs: Any) -> GPT2DoubleHeadsModelOutput:  # type: ignore[override]
-        return self.model(x, labels=x, **kwargs)
+        return self.model(**x, **kwargs)
 
     def training_step(self, batch: torch.Tensor, batch_idx: int) -> torch.FloatTensor:
         outputs = self(batch)
@@ -163,23 +176,24 @@ def train(cfg: ModelSettings) -> None:
 
     trainer = pl.Trainer(
         # use all available gpus
-        gpus=-1,
+        accelerator="gpu",
+        devices=1,
         default_root_dir=str(cfg.checkpoint_dir),
         # Use NVMe offloading on other clusters see more here:
         # https://pytorch-lightning.readthedocs.io/en/stable/advanced/advanced_gpu.html#deepspeed-infinity-nvme-offloading
-        strategy=DeepSpeedPlugin(
-            stage=3,
-            # offload_optimizer=True,
-            # offload_parameters=True,
-            # remote_device="cpu",
-            # offload_params_device="cpu",
-            # offload_optimizer_device="nvme",
-            # nvme_path="/tmp",
-            logging_batch_size_per_gpu=cfg.batch_size,
-            # add the option to load a config from json file with more deepspeed options
-            # note that if supplied all defaults are ignored - model settings defaults this arg to None
-            # config=cfg.deepspeed_cfg_file
-        ),
+        # strategy=DeepSpeedStrategy(
+        #     stage=3,
+        #     # offload_optimizer=True,
+        #     # offload_parameters=True,
+        #     # remote_device="cpu",
+        #     # offload_params_device="cpu",
+        #     # offload_optimizer_device="nvme",
+        #     # nvme_path="/tmp",
+        #     logging_batch_size_per_gpu=cfg.batch_size,
+        #     # add the option to load a config from json file with more deepspeed options
+        #     # note that if supplied all defaults are ignored - model settings defaults this arg to None
+        #     # config=cfg.deepspeed_cfg_file
+        # ),
         callbacks=callbacks,
         # max_steps=cfg.training_steps,
         logger=wandb_logger,

@@ -50,7 +50,17 @@ class PILE_Dataset(Dataset):
 
     def __getitem__(self, idx: int) -> torch.Tensor:
         raw_text = self.dataset[idx]["text"]
-        return self.tokenizer(raw_text, return_tensors="pt")
+        # return torch.Tensor(
+        #     self.tokenizer(raw_text, return_tensors="pt", max_length=self.block_size, padding="max_length")
+        # ).long()
+
+        return torch.Tensor(
+            self.tokenizer.encode(
+                raw_text,
+                max_length=self.block_size,
+                padding="max_length",
+            )
+        ).long()
 
 
 def main(args):

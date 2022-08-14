@@ -1,0 +1,12 @@
+wandb_active: false
+wandb_project_name: radbio_gptneox
+checkpoint_dir:
+load_from_checkpoint_dir: null
+node_local_path: /tmp
+num_nodes: 1
+num_blast_seqs_per_gpu: 8
+use_pretrained: false
+batch_size: 64
+epochs: 1
+block_size: 2048
+accumulate_grad_batches: 4

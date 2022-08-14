@@ -1,5 +1,6 @@
-pytorch-lightning==1.6.4
+lightning==2022.8.9
 wandb==0.12.19
 pydantic==1.9.1
 transformers[deepspeed]
 zstandard==0.18.0
+datasets==2.4.0

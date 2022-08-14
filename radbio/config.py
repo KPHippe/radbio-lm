@@ -43,9 +43,9 @@ class ModelSettings(BaseSettings):
     # logging settings
     wandb_active: bool = True
     """Whether to use wandb for logging."""
-    wandb_project_name: str = "codon_transformer"
+    wandb_project_name: str = "radbio_lm"
     """Wandb project name to log to."""
-    checkpoint_dir: Optional[Path] = Path("codon_transformer")
+    checkpoint_dir: Optional[Path] = None
     """Checkpoint directory to backup model weights."""
     load_pt_checkpoint: Optional[Path] = None
     """Checkpoint pt file to initialze model weights."""
@@ -59,27 +59,29 @@ class ModelSettings(BaseSettings):
     """Set to path if we want to run pytorch profiler"""
 
     # data settings
-    tokenizer_file: Path = Path("tokenizer_files/codon_wordlevel_100vocab.json")
-    """Path to the tokenizer file."""
-    train_file: Path
-    """Path to the training data."""
-    val_file: Path
-    """Path to the validation data."""
-    test_file: Path
-    """Path to the testing data."""
-    kmer_size: int = 3
-    """Size of kmer to use for tokenization."""
-    small_subset: int = 0
-    """Subset of data files to use during training. Uses the full dataset by default."""
+    dataset_name: Optional[str] = None
+    """PILE subdataset to grab, defaults to none which grabs whole dataset"""
+    tokenizer_name: Optional[str] = "EleutherAI/gpt-neox-20b"
+    """Name of HF GPTNeoXTokenizerFast tokenizer to get"""
+    split: Optional[str] = None
+    """Dataset split to get, defaults to none"""
+    train_split: str = "train"
+    """Split to pull from for training"""
+    test_split: Optional[str] = None
+    """Split to pull from for testing, smaller pile datasets do not have this"""
+    validation_split: Optional[str] = None
+    """Split to pull from for validation, smaller pile datasets do not have this"""
+    cache_dir: Path = Path("/home/khippe/raid/gpt-neox-train/data/hf_pile")
+    """Cache dir to look for the HF dataset"""
 
     # model settings
     model_config_json: Path
-    """Huggingface json dict to load AutoConfig from."""
+    """Huggingface json dict to load config from."""
     batch_size: int = 8
     """Training micro-batch size."""
     epochs: int = 5
     """Number of training epochs."""
-    block_size: int = 512
+    block_size: int = 2048
     """Block size to specify sequence length passed to the transformer."""
     accumulate_grad_batches: int = 1
     """Number of batches to accumulate before gradient updates."""
@@ -123,10 +125,5 @@ class ModelSettings(BaseSettings):
 
 
 if __name__ == "__main__":
-    settings = ModelSettings(
-        train_file=Path("train.txt"),
-        val_file=Path("val.txt"),
-        test_file=Path("test.txt"),
-        model_config_json=Path("model.json"),
-    )
-    settings.dump_yaml("settings_template.yaml")
+    settings = ModelSettings(model_config_json=Path("../configs/1.3b_train_cfg.yml"))
+    print(settings)
