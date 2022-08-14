@@ -1,6 +1,4 @@
-from functools import partial
-from pathlib import Path
-from typing import Union, Optional
+from typing import Optional
 from argparse import ArgumentParser
 
 
@@ -18,17 +16,18 @@ class PILE_Dataset(Dataset):
         tokenizer: GPTNeoXTokenizerFast,
         block_size: int = 2048,
         name: Optional[str] = None,
-        cache_dir: Union[str, Path, None] = None,
-        split: str = None,
+        cache_dir: Optional[str] = None,
+        split: Optional[str] = None,
     ) -> None:
         self.tokenizer = tokenizer
         self.block_size = block_size
-        self.path = "the_pile"
 
         self.tokenizer.add_special_tokens({"pad_token": "[PAD]"})
 
         # TODO: dataset is different type if split is None
-        self.dataset = load_dataset(self.path, name=name, cache_dir=cache_dir, split=split)
+        self.dataset = load_dataset(
+            "the_pile", name=name, cache_dir=cache_dir, split=split
+        )
         if not split:
             # default to train, then test, then valid
             if "train" in self.dataset.keys():
