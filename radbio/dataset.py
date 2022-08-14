@@ -24,14 +24,11 @@ class PILE_Dataset(Dataset):
         self.tokenizer = tokenizer
         self.block_size = block_size
         self.path = "the_pile"
-        self.name = name
-        self.cache_dir = cache_dir
-        self.split = split
 
         self.tokenizer.add_special_tokens({"pad_token": "[PAD]"})
 
         # TODO: dataset is different type if split is None
-        self.dataset = load_dataset(self.path, name=self.name, cache_dir=self.cache_dir, split=self.split)
+        self.dataset = load_dataset(self.path, name=name, cache_dir=cache_dir, split=split)
         if not self.split:
             # default to train, then test, then valid
             if "train" in self.dataset.keys():
@@ -42,8 +39,6 @@ class PILE_Dataset(Dataset):
                 self.dataset = self.dataset["validation"]
             else:
                 raise Exception("No split found for dataset")
-
-        self.pad_sequence = partial(torch.nn.functional.pad, value=tokenizer.pad_token_id)
 
     def __len__(self) -> int:
         return len(self.dataset)
