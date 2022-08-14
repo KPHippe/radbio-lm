@@ -16,7 +16,7 @@ class PILE_Dataset(Dataset):
     def __init__(
         self,
         tokenizer: GPTNeoXTokenizerFast,
-        block_size: int,
+        block_size: int = 2048,
         name: Optional[str] = None,
         cache_dir: Union[str, Path, None] = None,
         split: str = None,
@@ -32,6 +32,16 @@ class PILE_Dataset(Dataset):
 
         # TODO: dataset is different type if split is None
         self.dataset = load_dataset(self.path, name=self.name, cache_dir=self.cache_dir, split=self.split)
+        if not self.split:
+            # default to train, then test, then valid
+            if "train" in self.dataset.keys():
+                self.dataset = self.dataset["train"]
+            elif "test" in self.dataset.keys():
+                self.dataset = self.dataset["test"]
+            elif "validation" in self.dataset.keys():
+                self.dataset = self.dataset["validation"]
+            else:
+                raise Exception("No split found for dataset")
 
         self.pad_sequence = partial(torch.nn.functional.pad, value=tokenizer.pad_token_id)
 
@@ -49,7 +59,6 @@ def main(args):
         block_size=1024,
         name="enron_emails",
         cache_dir="/raid/khippe/hf_dataset_test",
-        split="all",
     )
 
     print(len(dataset))
