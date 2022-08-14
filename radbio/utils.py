@@ -53,5 +53,7 @@ class LoadPTCheckpointStrategy(ModelLoadStrategy):
         self.kwargs = kwargs
 
     def get_model(self, pl_module: "Type[pl.LightningModule]") -> "pl.LightningModule":
-        model = pl_module.load_from_checkpoint(str(self.weight_path), strict=False, **self.kwargs)
+        model = pl_module.load_from_checkpoint(
+            str(self.weight_path), strict=False, **self.kwargs
+        )
         return model

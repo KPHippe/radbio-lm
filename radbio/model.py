@@ -2,23 +2,24 @@ import json
 import os
 from argparse import ArgumentParser
 from typing import Any, List, Optional
+
 import pytorch_lightning as pl
 import torch
 from deepspeed.ops.adam import DeepSpeedCPUAdam, FusedAdam
 from deepspeed.runtime.lr_schedules import WarmupLR
 from pytorch_lightning.callbacks import Callback, LearningRateMonitor, ModelCheckpoint
 from pytorch_lightning.loggers import WandbLogger
-from pytorch_lightning.strategies.deepspeed import DeepSpeedStrategy
 
 # from pytorch_lightning.plugins import DeepSpeedPlugin
 from pytorch_lightning.profiler import PyTorchProfiler
+from pytorch_lightning.strategies.deepspeed import DeepSpeedStrategy
 from torch.utils.data import DataLoader, Dataset
 from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
 from transformers.modeling_outputs import CausalLMOutputWithPast
 
 from radbio.config import ModelSettings
-from radbio.utils import LoadDeepSpeedStrategy, LoadPTCheckpointStrategy
 from radbio.dataset import PILE_Dataset
+from radbio.utils import LoadDeepSpeedStrategy, LoadPTCheckpointStrategy
 
 
 class TransformerModel(pl.LightningModule):
@@ -38,7 +39,9 @@ class TransformerModel(pl.LightningModule):
         self.save_hyperparameters(settings_dict)
 
         self.cfg = cfg
-        self.tokenizer = AutoTokenizer.from_pretrained(self.cfg.tokenizer_name, cache_dir=self.cfg.cache_dir)
+        self.tokenizer = AutoTokenizer.from_pretrained(
+            self.cfg.tokenizer_name, cache_dir=self.cfg.cache_dir
+        )
         self.tokenizer.add_special_tokens({"pad_token": "[PAD]"})
 
         # loads from a json file like this: https://huggingface.co/google/reformer-enwik8/blob/main/config.json
@@ -50,7 +53,6 @@ class TransformerModel(pl.LightningModule):
 
     def get_dataset(self, split: Optional[str] = None) -> Dataset:
         """Helper function to generate dataset."""
-
         return PILE_Dataset(
             name=self.cfg.dataset_name,
             tokenizer=self.tokenizer,
@@ -189,7 +191,6 @@ def train(cfg: ModelSettings) -> None:
             # add the option to load a config from json file with more deepspeed options
             # note that if supplied all defaults are ignored - model settings defaults this arg to None
             # config=cfg.deepspeed_cfg_file
-            
         ),
         callbacks=callbacks,
         # max_steps=cfg.training_steps,
@@ -220,7 +221,6 @@ if __name__ == "__main__":
     os.environ["TOKENIZERS_PARALLELISM"] = "true"
     os.environ["TORCH_EXTENSIONS_DIR"] = "/home/khippe/raid/torch_extensions"
 
-    
     torch.set_num_threads(config.num_data_workers)  # type: ignore[attr-defined]
     pl.seed_everything(0)
 
