@@ -29,7 +29,7 @@ class PILE_Dataset(Dataset):
 
         # TODO: dataset is different type if split is None
         self.dataset = load_dataset(self.path, name=name, cache_dir=cache_dir, split=split)
-        if not self.split:
+        if not split:
             # default to train, then test, then valid
             if "train" in self.dataset.keys():
                 self.dataset = self.dataset["train"]
