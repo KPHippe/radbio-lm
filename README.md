@@ -28,6 +28,25 @@ pip3 install -r requirements/requirements.txt
 pip3 install .
 ``` 
 
+### Dev installation
+*Recomended to use virtual environment such as conda*
+
+```
+conda create -n radbio_lm python=3.8
+conda activate radbio_lm 
+```
+1. Install pytorch 
+  ```
+  conda install pytorch torchvision torchaudio cudatoolkit=11.3 -c pytorch
+  ```
+1. Install other requirements
+  ```
+  pip3 install --upgrade pip setuptools wheel
+  pip3 install -r requirements/dev.txt
+  pip3 install -r requirements/requirements.txt
+  pip3 install -e .
+  ```
+
 ## Usage
 
 TODO

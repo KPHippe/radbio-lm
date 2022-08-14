@@ -58,6 +58,7 @@ class PILE_Dataset(Dataset):
             self.tokenizer.encode(
                 raw_text,
                 max_length=self.block_size,
+                truncation=True,
                 padding="max_length",
             )
         ).long()

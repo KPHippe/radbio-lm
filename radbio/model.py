@@ -65,30 +65,26 @@ class TransformerModel(pl.LightningModule):
             shuffle=shuffle,
             drop_last=True,
             batch_size=self.cfg.batch_size,
-            num_workers=self.cfg.num_data_workers,
-            prefetch_factor=self.cfg.prefetch_factor,
-            pin_memory=self.cfg.pin_memory,
-            persistent_workers=self.cfg.persistent_workers,
+            # num_workers=self.cfg.num_data_workers,
+            # prefetch_factor=self.cfg.prefetch_factor,
+            # pin_memory=self.cfg.pin_memory,
+            # persistent_workers=self.cfg.persistent_workers,
         )
 
     def train_dataloader(self) -> DataLoader:
         self.train_dataset = self.get_dataset(self.cfg.train_split)
         return self.get_dataloader(self.train_dataset, shuffle=True)
 
-    def val_dataloader(self) -> Optional[DataLoader]:
-        if self.cfg.validation_split:
-            self.val_dataset = self.get_dataset(self.cfg.validation_split)
-            return self.get_dataloader(self.val_dataset, shuffle=False)
-        return None
+    def val_dataloader(self) -> DataLoader:
+        self.val_dataset = self.get_dataset(self.cfg.validation_split)
+        return self.get_dataloader(self.val_dataset, shuffle=False)
 
     def test_dataloader(self) -> DataLoader:
-        if self.cfg.test_split:
-            self.test_dataset = self.get_dataset(self.cfg.test_split)
-            return self.get_dataloader(self.test_dataset, shuffle=False)
-        return None
+        self.test_dataset = self.get_dataset(self.cfg.test_split)
+        return self.get_dataloader(self.test_dataset, shuffle=False)
 
     def forward(self, x: torch.Tensor, **kwargs: Any) -> GPT2DoubleHeadsModelOutput:  # type: ignore[override]
-        return self.model(**x, **kwargs)
+        return self.model(x, **kwargs)
 
     def training_step(self, batch: torch.Tensor, batch_idx: int) -> torch.FloatTensor:
         outputs = self(batch)
@@ -177,23 +173,23 @@ def train(cfg: ModelSettings) -> None:
     trainer = pl.Trainer(
         # use all available gpus
         accelerator="gpu",
-        devices=1,
+        devices=-1,
         default_root_dir=str(cfg.checkpoint_dir),
         # Use NVMe offloading on other clusters see more here:
         # https://pytorch-lightning.readthedocs.io/en/stable/advanced/advanced_gpu.html#deepspeed-infinity-nvme-offloading
-        # strategy=DeepSpeedStrategy(
-        #     stage=3,
-        #     # offload_optimizer=True,
-        #     # offload_parameters=True,
-        #     # remote_device="cpu",
-        #     # offload_params_device="cpu",
-        #     # offload_optimizer_device="nvme",
-        #     # nvme_path="/tmp",
-        #     logging_batch_size_per_gpu=cfg.batch_size,
-        #     # add the option to load a config from json file with more deepspeed options
-        #     # note that if supplied all defaults are ignored - model settings defaults this arg to None
-        #     # config=cfg.deepspeed_cfg_file
-        # ),
+        strategy=DeepSpeedStrategy(
+            stage=3,
+            # offload_optimizer=True,
+            # offload_parameters=True,
+            # remote_device="cpu",
+            # offload_params_device="cpu",
+            # offload_optimizer_device="nvme",
+            # nvme_path="/tmp",
+            logging_batch_size_per_gpu=cfg.batch_size,
+            # add the option to load a config from json file with more deepspeed options
+            # note that if supplied all defaults are ignored - model settings defaults this arg to None
+            # config=cfg.deepspeed_cfg_file
+        ),
         callbacks=callbacks,
         # max_steps=cfg.training_steps,
         logger=wandb_logger,
@@ -203,7 +199,7 @@ def train(cfg: ModelSettings) -> None:
         precision=cfg.precision,
         max_epochs=cfg.epochs,
         num_nodes=cfg.num_nodes,
-        check_val_every_n_epoch=cfg.check_val_every_n_epoch,
+        check_val_every_n_epoch=-1,
     )
 
     trainer.fit(model)
