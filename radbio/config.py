@@ -71,7 +71,7 @@ class ModelSettings(BaseSettings):
     """Split to pull from for testing, smaller pile datasets do not have this"""
     validation_split: Optional[str] = None
     """Split to pull from for validation, smaller pile datasets do not have this"""
-    cache_dir: Path = Path("/home/khippe/raid/gpt-neox-train/data/hf_pile")
+    cache_dir: str = "/home/khippe/raid/gpt-neox-train/data/hf_pile"
     """Cache dir to look for the HF dataset"""
 
     # model settings
