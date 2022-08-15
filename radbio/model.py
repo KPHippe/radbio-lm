@@ -10,7 +10,6 @@ from deepspeed.runtime.lr_schedules import WarmupLR
 from pytorch_lightning.callbacks import Callback, LearningRateMonitor, ModelCheckpoint
 from pytorch_lightning.loggers import WandbLogger
 
-# from pytorch_lightning.plugins import DeepSpeedPlugin
 from pytorch_lightning.profiler import PyTorchProfiler
 from pytorch_lightning.strategies.deepspeed import DeepSpeedStrategy
 from torch.utils.data import DataLoader, Dataset
@@ -67,10 +66,10 @@ class TransformerModel(pl.LightningModule):
             shuffle=shuffle,
             drop_last=True,
             batch_size=self.cfg.batch_size,
-            # num_workers=self.cfg.num_data_workers,
-            # prefetch_factor=self.cfg.prefetch_factor,
+            num_workers=self.cfg.num_data_workers,
+            prefetch_factor=self.cfg.prefetch_factor,
             pin_memory=self.cfg.pin_memory,
-            # persistent_workers=self.cfg.persistent_workers,
+            persistent_workers=self.cfg.persistent_workers,
         )
 
     def train_dataloader(self) -> DataLoader:
@@ -86,7 +85,7 @@ class TransformerModel(pl.LightningModule):
         return self.get_dataloader(self.test_dataset, shuffle=False)
 
     def forward(self, x: torch.Tensor, **kwargs: Any) -> CausalLMOutputWithPast:  # type: ignore[override]
-        return self.model(x, **kwargs)
+        return self.model(x, labels=x, **kwargs)
 
     def training_step(self, batch: torch.Tensor, batch_idx: int) -> torch.FloatTensor:
         outputs = self(batch)
