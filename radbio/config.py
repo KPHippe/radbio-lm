@@ -47,6 +47,8 @@ class ModelSettings(BaseSettings):
     """Wandb project name to log to."""
     checkpoint_dir: Optional[Path] = None
     """Checkpoint directory to backup model weights."""
+    checkpoint_frequency: Optional[int] = 10000
+    """Number of steps to checkpoint after, defaults to 10000"""
     load_pt_checkpoint: Optional[Path] = None
     """Checkpoint pt file to initialze model weights."""
     load_ds_checkpoint: Optional[Path] = None
@@ -63,8 +65,6 @@ class ModelSettings(BaseSettings):
     """PILE subdataset to grab, defaults to none which grabs whole dataset"""
     tokenizer_name: Optional[str] = "EleutherAI/gpt-neox-20b"
     """Name of HF GPTNeoXTokenizerFast tokenizer to get"""
-    split: Optional[str] = None
-    """Dataset split to get, defaults to none"""
     train_split: str = "train"
     """Split to pull from for training"""
     test_split: Optional[str] = None

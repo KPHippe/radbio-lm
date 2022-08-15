@@ -1,9 +1,12 @@
-wandb_active: false
+#For testing on the smaller enron dataset
+
+wandb_active: true
 wandb_project_name: radbio_gptneox
+
+checkpoint_dir: /home/khippe/raid/enron_test_model
 
 dataset_name: enron_emails
 split: train
-train_split: train
 cache_dir: /home/khippe/raid/hf_dataset_test
 
 model_config_json: /home/khippe/github/radbio-lm/configs/gptneox_1.3b_hf.json
@@ -12,4 +15,3 @@ warm_up_lr:
   num_steps: 5000
 
 batch_size: 1
-pin_memory: false
