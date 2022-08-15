@@ -1,13 +1,10 @@
-from functools import partial
-from pathlib import Path
-from typing import Union, Optional
 from argparse import ArgumentParser
-
+from typing import Optional
 
 import torch
+from datasets import load_dataset
 from torch.utils.data import Dataset
 from transformers import GPTNeoXTokenizerFast
-from datasets import load_dataset
 
 
 class PILE_Dataset(Dataset):
@@ -18,17 +15,23 @@ class PILE_Dataset(Dataset):
         tokenizer: GPTNeoXTokenizerFast,
         block_size: int = 2048,
         name: Optional[str] = None,
-        cache_dir: Union[str, Path, None] = None,
-        split: str = None,
+        cache_dir: Optional[str] = None,
+        split: Optional[str] = None,
     ) -> None:
         self.tokenizer = tokenizer
         self.block_size = block_size
-        self.path = "the_pile"
 
+        # TODO: This line can be removed, since this is run during tokenizer initialization.
         self.tokenizer.add_special_tokens({"pad_token": "[PAD]"})
 
         # TODO: dataset is different type if split is None
-        self.dataset = load_dataset(self.path, name=name, cache_dir=cache_dir, split=split)
+        self.dataset = load_dataset(
+            "the_pile", name=name, cache_dir=cache_dir, split=split
+        )
+
+        # TODO: Better to be explicit here, can we require that split is never None?
+        #       The load_dataset docs say: If None, will return a `dict` with all splits
+        #       This might cause OOM issues if each rank is loading data it doesn't need.
         if not split:
             # default to train, then test, then valid
             if "train" in self.dataset.keys():
