@@ -132,6 +132,7 @@ def train(cfg: ModelSettings) -> None:
 
     callbacks: List[Callback] = []
     if cfg.checkpoint_dir is not None:
+        # TODO: change checkpoint dir naming scheme and maybe filename? 
         callbacks.append(
             ModelCheckpoint(
                 dirpath=cfg.checkpoint_dir,
